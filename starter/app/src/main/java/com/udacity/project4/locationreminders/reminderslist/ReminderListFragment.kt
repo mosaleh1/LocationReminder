@@ -1,9 +1,16 @@
 package com.udacity.project4.locationreminders.reminderslist
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.*
+import android.widget.Toast
 import androidx.databinding.DataBindingUtil
+import androidx.lifecycle.observe
+import androidx.navigation.fragment.findNavController
+import com.firebase.ui.auth.AuthUI
+import com.google.firebase.auth.FirebaseAuth
 import com.udacity.project4.R
+import com.udacity.project4.authentication.AuthenticationActivity
 import com.udacity.project4.base.BaseFragment
 import com.udacity.project4.base.NavigationCommand
 import com.udacity.project4.databinding.FragmentRemindersBinding
@@ -19,7 +26,7 @@ class ReminderListFragment : BaseFragment() {
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
         binding =
             DataBindingUtil.inflate(
                 inflater,
@@ -62,20 +69,36 @@ class ReminderListFragment : BaseFragment() {
 
     private fun setupRecyclerView() {
         val adapter = RemindersListAdapter {
-        }
 
+        }
 //        setup the recycler view using the extension function
         binding.reminderssRecyclerView.setup(adapter)
+
+        _viewModel.remindersList.observe(requireActivity()) {
+            adapter.addData(it)
+            showToast("works", context = requireContext())
+        }
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.logout -> {
-//                TODO: add the logout implementation
+                //DONE TODO: add the logout implementation
+                logUserOut()
             }
         }
         return super.onOptionsItemSelected(item)
+    }
 
+    private fun logUserOut() {
+        AuthUI.getInstance().signOut(requireContext())
+            .addOnSuccessListener {
+                val navIntent = Intent(requireActivity(), AuthenticationActivity::class.java)
+                startActivity(
+                    navIntent
+                )
+                requireActivity().finish()
+            }
     }
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
