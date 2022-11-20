@@ -1,10 +1,12 @@
 package com.udacity.project4.utils
 
+import android.util.EventLogTags
 import android.view.View
 import androidx.databinding.BindingAdapter
 import androidx.lifecycle.LiveData
 import androidx.recyclerview.widget.RecyclerView
 import com.udacity.project4.base.BaseRecyclerViewAdapter
+import java.util.regex.Matcher
 
 
 object BindingAdapters {

@@ -229,16 +229,16 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     }
 
     private fun handleUserSelection() {
-        map.setOnPoiClickListener {
+        map.setOnMapLongClickListener {
             map.clear()
+            POI = PointOfInterest(it, it.latitude.toString(), "Current Selected Location")
             map.addMarker(
                 MarkerOptions()
-                    .position(it.latLng)
+                    .position(it)
             )
             if (binding.confirmLocationBtn.visibility != View.VISIBLE) {
                 binding.confirmLocationBtn.visibility = View.VISIBLE
             }
-            POI = PointOfInterest(it.latLng, it.placeId, it.name)
         }
     }
 
