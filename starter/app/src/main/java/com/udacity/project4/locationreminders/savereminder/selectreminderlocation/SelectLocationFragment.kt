@@ -42,6 +42,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
 
     private lateinit var map: GoogleMap
 
+    // #01 DONE
     private val runningQOrlater: Boolean
         get() = android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q
 
@@ -58,7 +59,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
 
         setHasOptionsMenu(true)
         setDisplayHomeAsUpEnabled(true)
-
+        requestForegroundAndBackgroundPermission()
 
 //     DONE   TODO: zoom to the user location after taking his permission
 //          requestForegroundAndBackgroundPermission()
@@ -89,7 +90,9 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         permissions: Array<out String>,
         grantResults: IntArray
     ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         Log.d(TAG, "onRequestPermissionsResult: ")
+        showToast("works", requireActivity())
         if (
             grantResults.isEmpty() ||
             grantResults[LOCATION_PERMISSION_INDEX] == PackageManager.PERMISSION_DENIED ||
@@ -114,7 +117,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
             Log.d(TAG, "onRequestPermissionsResult: false ")
             checkDeviceLocation()
         }
-
+        Log.d(TAG, "onRequestPermissionsResult: ")
     }
 
     @SuppressLint("MissingPermission")
@@ -133,6 +136,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         }
     }
 
+    //DONE #03
     private fun requestForegroundAndBackgroundPermission() {
         if (checkIfPermissionsAreGranted()) {
             //     DONE   TODO: add the map setup implementation
@@ -140,7 +144,6 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
             return
         }
         var permissionsArray = arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
-
         val resultCode =
             when {
                 runningQOrlater -> {
@@ -151,11 +154,12 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
                     REQUEST_FOREGROUND_ONLY_PERMISSION_RESULT_CODE
                 }
             }
-        ActivityCompat.requestPermissions(
-            requireActivity(), permissionsArray, resultCode
+        requestPermissions(
+            permissionsArray, resultCode
         )
     }
 
+    // DONE #02
     private fun checkIfPermissionsAreGranted(): Boolean {
         val foregroundPermissionApproved =
             PackageManager.PERMISSION_GRANTED ==
@@ -179,7 +183,9 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
 
         //    Done  TODO   send back the selected location details to the view model
         _viewModel.selectedPOI.value = POI
-        _viewModel.reminderSelectedLocationStr.value = POI.name
+        POI.name?.let {
+            _viewModel.reminderSelectedLocationStr.value = it
+        }
         //  Done    TODO   and navigate back to the previous fragment to save the reminder and add the geofence
         _viewModel.navigationCommand.postValue(
             NavigationCommand.BackTo
@@ -219,7 +225,6 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     @SuppressLint("MissingPermission")
     override fun onMapReady(_map: GoogleMap) {
         map = _map
-        requestForegroundAndBackgroundPermission()
 
         setUpMapStyle(map)
 

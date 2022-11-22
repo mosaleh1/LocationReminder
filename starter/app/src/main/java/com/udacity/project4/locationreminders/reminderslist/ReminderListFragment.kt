@@ -43,6 +43,7 @@ class ReminderListFragment : BaseFragment() {
         return binding.root
     }
 
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         binding.lifecycleOwner = this
@@ -56,6 +57,7 @@ class ReminderListFragment : BaseFragment() {
         super.onResume()
         //load the reminders list on the ui
         _viewModel.loadReminders()
+        binding.refreshLayout.isRefreshing = true
     }
 
     private fun navigateToAddReminder() {
@@ -77,6 +79,7 @@ class ReminderListFragment : BaseFragment() {
         _viewModel.remindersList.observe(requireActivity()) {
             adapter.addData(it)
             showToast("works", context = requireContext())
+            binding.refreshLayout.isRefreshing = false
         }
     }
 

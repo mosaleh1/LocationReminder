@@ -2,14 +2,18 @@ package com.udacity.project4
 
 import android.app.Application
 import androidx.test.core.app.ActivityScenario
+import androidx.test.core.app.ApplicationProvider
 import androidx.test.core.app.ApplicationProvider.getApplicationContext
 import androidx.test.espresso.Espresso.*
 import androidx.test.espresso.IdlingRegistry
 import androidx.test.espresso.action.ViewActions.*
 import androidx.test.espresso.assertion.ViewAssertions.matches
+import androidx.test.espresso.matcher.RootMatchers.withDecorView
 import androidx.test.espresso.matcher.ViewMatchers.*
+import androidx.test.ext.junit.rules.ActivityScenarioRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.LargeTest
+import androidx.test.rule.GrantPermissionRule
 import com.udacity.project4.locationreminders.RemindersActivity
 import com.udacity.project4.locationreminders.data.ReminderDataSource
 import com.udacity.project4.locationreminders.data.local.LocalDB
@@ -32,6 +36,7 @@ import org.koin.core.context.stopKoin
 import org.koin.dsl.module
 import org.koin.test.AutoCloseKoinTest
 import org.koin.test.get
+import org.mockito.AdditionalMatchers.not
 
 @RunWith(AndroidJUnit4::class)
 @LargeTest
@@ -44,7 +49,12 @@ class RemindersActivityTest :
     private val binding = DataBindingIdlingResource()
 
     @get:Rule
-    private lateinit var reminderActivity: ActivityScenario<RemindersActivity>
+    val permissionRule: GrantPermissionRule = GrantPermissionRule.grant(
+        android.Manifest.permission.ACCESS_FINE_LOCATION
+    )
+
+    @get:Rule
+    var activityScenarioRule = ActivityScenarioRule(RemindersActivity::class.java)
 
     /**
      * As we use Koin as a Service Locator Library to develop our code, we'll also use Koin to test our code.
@@ -87,12 +97,13 @@ class RemindersActivityTest :
 
     @Before
     fun registerIdling() {
-         IdlingRegistry.getInstance().register(binding)
+        IdlingRegistry.getInstance().register(binding)
     }
 
     @After
     fun unregisterIdlingResources() {
         IdlingRegistry.getInstance().unregister(binding)
+        stopKoin()
     }
 
 //    DONE TODO: add End to End testing to the app
@@ -101,7 +112,7 @@ class RemindersActivityTest :
     @Test
     fun addNewReminderScenarioTest() = runBlocking {
         //Given  When   Then
-        reminderActivity = ActivityScenario.launch(RemindersActivity::class.java)
+        val reminderActivity = ActivityScenario.launch(RemindersActivity::class.java)
         binding.monitorActivity(reminderActivity)
 
 
@@ -109,7 +120,8 @@ class RemindersActivityTest :
         onView(withId(R.id.addReminderFAB)).perform(click())
 
         //add title
-        onView(withId(R.id.reminderTitle)).perform(typeText("Title Test"))
+        val title = "Title Test"
+        onView(withId(R.id.reminderTitle)).perform(typeText(title))
 
         //add discretion
         onView(withId(R.id.reminderDescription)).perform(typeText("description Test"))
@@ -120,19 +132,51 @@ class RemindersActivityTest :
         delay(2000)
         onView(withId(R.id.map)).perform(longClick())
 
-        onView(withId(R.id.confirm_button)).perform(click())
+        onView(withId(R.id.confirm_location_btn)).perform(click())
 
         onView(withId(R.id.saveReminder)).perform(click())
 
-        onView(withId(R.id.reminderssRecyclerView)).check(
+        onView(withId(R.id.refreshLayout)).perform(swipeDown())
+
+        runBlocking {
+            delay(2000)
+        }
+        onView(withText(title)).check(
+            matches(isDisplayed())
+        )
+
+//        onView(withId(R.id.reminderssRecyclerView)).check(
+//            matches(
+//                atPosition(
+//                    0,
+//                    withText("Testing title"),
+//                    R.id.title
+//                )
+//            )
+//        )
+        reminderActivity.close()
+    }
+
+    @Test
+    fun testSnackbarAndToast() {
+        val reminderActivity = ActivityScenario.launch(RemindersActivity::class.java)
+        binding.monitorActivity(reminderActivity)
+
+        onView(withId(R.id.addReminderFAB)).perform(click())
+        onView(withId(R.id.saveReminder)).perform(click())
+
+        onView(
+            withText(
+                getApplicationContext<MyApp>()
+                    .getString(R.string.err_enter_title)
+            )
+        ).check(
             matches(
-                atPosition(
-                    0,
-                    withText("Testing title"),
-                    R.id.title
-                )
+                isDisplayed()
             )
         )
+
         reminderActivity.close()
+
     }
 }

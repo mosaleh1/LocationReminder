@@ -29,13 +29,14 @@ class RemindersDaoTest {
     private lateinit var remindersDB: RemindersDatabase
 
 
-
     @Before
     fun initializeDatabase() {
         remindersDB = Room.inMemoryDatabaseBuilder(
             ApplicationProvider.getApplicationContext(),
             RemindersDatabase::class.java
-        ).build()
+        )
+            .allowMainThreadQueries()
+            .build()
     }
 
     @Test

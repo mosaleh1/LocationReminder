@@ -62,7 +62,9 @@ class SaveReminderFragment : BaseFragment() {
 
     private fun observeOnData() {
         _viewModel.selectedPOI.observe(viewLifecycleOwner) {
-            binding.selectedLocation.text = it.name
+          it?.let {poi->
+              binding.selectedLocation.text = poi.name
+          }
         }
     }
 
@@ -142,12 +144,10 @@ class SaveReminderFragment : BaseFragment() {
         geofencingClient.addGeofences(
             request, geofencePendingIntent
         ).addOnSuccessListener {
-            //showToast("Successfully added Geofence", context = requireActivity())
             Log.d(TAG, "addReminderToGeo: successfully added")
             _viewModel.saveReminder(reminder)
 
         }.addOnFailureListener {
-            //showToast("failed to add Geofence", context = requireActivity())
             Log.d(TAG, "addReminderToGeo: failed to add geo ")
         }
     }
