@@ -114,7 +114,7 @@ class SaveReminderFragment : BaseFragment() {
         requestPermissions(permissionArray, requestCode)
     }
 
-    private fun checkDeviceLocationAndStartGeoFence(resolve: Boolean = false) {
+    private fun checkDeviceLocationAndStartGeoFence(resolve: Boolean = true) {
         val locationRequest = LocationRequest.create().apply {
             priority = LocationRequest.PRIORITY_LOW_POWER
         }
@@ -169,7 +169,7 @@ class SaveReminderFragment : BaseFragment() {
                 geofenceRequest, geoFencePendingIntent
             ).addOnSuccessListener {
                 _viewModel.saveReminder(reminderDataItem)
-            }.addOnFailureListener{
+            }.addOnFailureListener {
                 _viewModel.showSnackBarInt.value = R.string.error_adding_geofence
             }
         }
@@ -185,7 +185,7 @@ class SaveReminderFragment : BaseFragment() {
         super.onActivityResult(requestCode, resultCode, data)
 
         if (requestCode == TURN_DEVICE_LOCATION) {
-
+            checkDeviceLocationAndStartGeoFence()
         }
     }
 

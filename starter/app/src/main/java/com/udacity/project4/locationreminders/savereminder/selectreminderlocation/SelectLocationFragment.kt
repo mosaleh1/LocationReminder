@@ -191,8 +191,9 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == FINE_LOCATION_REQUEST_CODE) {
-            if (grantResults.isEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 maps.isMyLocationEnabled = true
+                navigateToCurrentLocation()
             } else {
                 _viewModel.showSnackBarInt.value = R.string.permission_denied_explanation
             }
