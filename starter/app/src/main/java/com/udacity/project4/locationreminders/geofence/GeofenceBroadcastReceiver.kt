@@ -7,6 +7,7 @@ import android.util.Log
 import com.google.android.gms.location.GeofencingEvent
 import com.udacity.project4.locationreminders.geofence.GeofenceTransitionsJobIntentService.Companion.enqueueWork
 import com.udacity.project4.locationreminders.savereminder.SaveReminderFragment.Companion.GEO_FENCE_ACTION
+import com.udacity.project4.utils.Constants
 
 
 /**
@@ -21,16 +22,16 @@ import com.udacity.project4.locationreminders.savereminder.SaveReminderFragment.
 
 class GeofenceBroadcastReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
-
-//DONE TODO: implement the onReceive method to receive the geofencing events at the background
-        if (intent.action == GEO_FENCE_ACTION) {
-            val geofenceEvent = GeofencingEvent.fromIntent(intent)
-            if (!geofenceEvent.hasError()) {
-                enqueueWork(context, intent)
-            }
-            Log.e(TAG, "onReceive: ${geofenceEvent.errorCode}")
+        Log.d(Constants.ADD_GEO_TAG, "onReceive: ")
+        //DONE TODO: implement the onReceive method to receive the geofencing events at the background
+        val geofenceEvent = GeofencingEvent.fromIntent(intent)
+        if (!geofenceEvent.hasError()) {
+            Log.d(Constants.ADD_GEO_TAG, "onReceive: true ")
+            enqueueWork(context, intent)
             return
         }
+        Log.e(Constants.ADD_GEO_TAG, "onReceive: ${geofenceEvent.errorCode}")
+        return
     }
 }
 

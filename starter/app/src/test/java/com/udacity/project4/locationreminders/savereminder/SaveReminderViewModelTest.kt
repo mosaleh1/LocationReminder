@@ -1,5 +1,6 @@
 package com.udacity.project4.locationreminders.savereminder
 
+import android.os.Build
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -17,10 +18,12 @@ import org.junit.runner.RunWith
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
 import org.koin.dsl.module
+import org.robolectric.annotation.Config
 
 @ExperimentalCoroutinesApi
 @RunWith(AndroidJUnit4::class)
 class SaveReminderViewModelTest {
+
     @get:Rule
     var instantExecutorRule = InstantTaskExecutorRule()
 
@@ -39,6 +42,7 @@ class SaveReminderViewModelTest {
     }
 
     @Test
+    @Config(sdk = [Build.VERSION_CODES.P])
     fun validateReminder_Invalid() {
         // GIVEN - invalid reminder
         val reminder = ReminderDataItem(
@@ -58,6 +62,7 @@ class SaveReminderViewModelTest {
     }
 
     @Test
+    @Config(sdk = [Build.VERSION_CODES.P])
     fun validateReminder_Valid() {
         // GIVEN - valid reminder
         val reminder = ReminderDataItem(

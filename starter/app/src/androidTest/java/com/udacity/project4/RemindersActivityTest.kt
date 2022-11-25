@@ -53,8 +53,8 @@ class RemindersActivityTest :
         android.Manifest.permission.ACCESS_FINE_LOCATION
     )
 
-    @get:Rule
-    var activityScenarioRule = ActivityScenarioRule(RemindersActivity::class.java)
+//    @get:Rule
+//    var activityScenarioRule = ActivityScenarioRule(RemindersActivity::class.java)
 
     /**
      * As we use Koin as a Service Locator Library to develop our code, we'll also use Koin to test our code.
@@ -103,7 +103,6 @@ class RemindersActivityTest :
     @After
     fun unregisterIdlingResources() {
         IdlingRegistry.getInstance().unregister(binding)
-        stopKoin()
     }
 
 //    DONE TODO: add End to End testing to the app
@@ -129,7 +128,7 @@ class RemindersActivityTest :
         onView(withId(R.id.selectLocation)).perform(click())
 
 
-        delay(2000)
+        delay(1000)
         onView(withId(R.id.map)).perform(longClick())
 
         onView(withId(R.id.confirm_location_btn)).perform(click())
@@ -138,9 +137,6 @@ class RemindersActivityTest :
 
         onView(withId(R.id.refreshLayout)).perform(swipeDown())
 
-        runBlocking {
-            delay(2000)
-        }
         onView(withText(title)).check(
             matches(isDisplayed())
         )
@@ -175,8 +171,6 @@ class RemindersActivityTest :
                 isDisplayed()
             )
         )
-
         reminderActivity.close()
-
     }
 }

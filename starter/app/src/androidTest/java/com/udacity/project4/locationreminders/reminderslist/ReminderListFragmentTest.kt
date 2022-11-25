@@ -33,6 +33,8 @@ import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
 import org.koin.dsl.module
 import org.mockito.AdditionalMatchers.not
+import org.mockito.InjectMocks
+import org.mockito.Mock
 import org.mockito.Mockito
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
@@ -45,6 +47,8 @@ class ReminderListFragmentTest {
     private lateinit var repository: ReminderDataSource
 
     @get:Rule
+    @Mock
+    @InjectMocks
     val instantTaskExecutorRule = InstantTaskExecutorRule()
 
 
@@ -74,7 +78,7 @@ class ReminderListFragmentTest {
             modules(listOf(myModule))
         }
 
-        repository = GlobalContext.get().koin.get()
+        repository = get().koin.get()
 
 
         runBlocking {
@@ -88,22 +92,20 @@ class ReminderListFragmentTest {
             description = "desc",
             location = "loc",
             latitude = 47.5456551,
-            longitude = 122.0101731)
+            longitude = 122.0101731
+        )
     }
 
+
     @Test
-    fun reminders_DisplayedInUi() = runBlockingTest{
+    fun reminders_DisplayedInUi() = runBlockingTest {
 
         val reminder = getReminder()
-        runBlocking{
-
+        runBlocking {
             repository.saveReminder(reminder)
         }
-
-
         launchFragmentInContainer<ReminderListFragment>(Bundle.EMPTY, R.style.AppTheme)
 
-        onView(withId(R.id.noDataTextView)).check(matches(not(isDisplayed())))
         onView(withText(reminder.title)).check(matches(isDisplayed()))
         onView(withText(reminder.description)).check(matches(isDisplayed()))
         onView(withText(reminder.location)).check(matches(isDisplayed()))
@@ -111,7 +113,7 @@ class ReminderListFragmentTest {
     }
 
     @Test
-    fun noReminders_shows_noData() = runBlockingTest{
+    fun noReminders_shows_noData() = runBlockingTest {
 
         launchFragmentInContainer<ReminderListFragment>(Bundle.EMPTY, R.style.AppTheme)
 

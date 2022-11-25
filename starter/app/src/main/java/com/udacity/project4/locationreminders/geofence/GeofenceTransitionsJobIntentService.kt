@@ -2,14 +2,17 @@ package com.udacity.project4.locationreminders.geofence
 
 import android.content.Context
 import android.content.Intent
+import android.os.Handler
+import android.util.Log
 import androidx.core.app.JobIntentService
 import com.google.android.gms.location.Geofence
 import com.google.android.gms.location.GeofencingEvent
+import com.udacity.project4.locationreminders.RemindersActivity
 import com.udacity.project4.locationreminders.data.ReminderDataSource
 import com.udacity.project4.locationreminders.data.dto.ReminderDTO
 import com.udacity.project4.locationreminders.data.dto.Result
-import com.udacity.project4.locationreminders.data.local.RemindersLocalRepository
 import com.udacity.project4.locationreminders.reminderslist.ReminderDataItem
+import com.udacity.project4.utils.Constants
 import com.udacity.project4.utils.sendNotification
 import kotlinx.coroutines.*
 import org.koin.android.ext.android.inject
@@ -26,6 +29,7 @@ class GeofenceTransitionsJobIntentService : JobIntentService(), CoroutineScope {
 
         //    DONE    TODO: call this to start the JobIntentService to handle the geofencing transition events
         fun enqueueWork(context: Context, intent: Intent) {
+            Log.d(Constants.ADD_GEO_TAG, "enqueueWork: received")
             enqueueWork(
                 context,
                 GeofenceTransitionsJobIntentService::class.java, JOB_ID,
@@ -38,7 +42,23 @@ class GeofenceTransitionsJobIntentService : JobIntentService(), CoroutineScope {
         //DONE TODO: handle the geofencing transition events and
         // send a notification to the user when he enters the geofence area
         //DONE TODO call @sendNotification
-        sendNotification(GeofencingEvent.fromIntent(intent).triggeringGeofences)
+        Log.d(Constants.ADD_GEO_TAG, "onHandleWork: called")
+
+        val geofencingEvent = GeofencingEvent.fromIntent(intent)
+        if (geofencingEvent.hasError()) {
+            Log.d(Constants.ADD_GEO_TAG, "onHandleWork: hasError ")
+            return
+        }
+        Log.d(Constants.ADD_GEO_TAG, "onHandleWork: ${geofencingEvent.geofenceTransition}")
+        if (geofencingEvent.geofenceTransition == Geofence.GEOFENCE_TRANSITION_ENTER) {
+            val data = geofencingEvent.triggeringGeofences
+            Log.d(Constants.ADD_GEO_TAG, "onHandleWork:  GEOFENCE_ENTER ${data.size} ")
+            if (data.isNotEmpty()) {
+                Log.d(Constants.ADD_GEO_TAG, "onHandleWork: isEmpty ")
+                sendNotification(geofencingEvent.triggeringGeofences)
+            }
+        }
+        Log.d(Constants.ADD_GEO_TAG, "onHandleWork: done ")
     }
 
     //DONE TODO: get the request id of the current geofence
