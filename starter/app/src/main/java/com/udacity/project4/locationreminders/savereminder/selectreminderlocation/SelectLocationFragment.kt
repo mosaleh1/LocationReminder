@@ -91,24 +91,25 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        when (item.itemId) {
+        return when (item.itemId) {
             R.id.normal_map -> {
                 maps.mapType = GoogleMap.MAP_TYPE_NORMAL
+                true
             }
             R.id.satellite_map -> {
                 maps.mapType = GoogleMap.MAP_TYPE_SATELLITE
-
+                true
             }
             R.id.hybrid_map -> {
                 maps.mapType = GoogleMap.MAP_TYPE_HYBRID
+                true
             }
             R.id.terrain_map -> {
                 maps.mapType = GoogleMap.MAP_TYPE_TERRAIN
-
+                true
             }
             else -> super.onOptionsItemSelected(item)
         }
-        return true
     }
 
 
