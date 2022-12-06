@@ -11,18 +11,19 @@ import com.google.android.material.snackbar.Snackbar
  * Base Fragment to observe on the common LiveData objects
  */
 abstract class BaseFragment : Fragment() {
-     val REQUEST_CODE: Int = 202
+    val REQUEST_CODE: Int = 202
 
     /**
      * Every fragment has to have an instance of a view model that extends from the BaseViewModel
      */
     abstract val _viewModel: BaseViewModel
 
-    fun showToast(message: String = "Message",
-                  context: Context ,
-                  duration : Int = Toast.LENGTH_LONG
+    fun showToast(
+        message: String = "Message",
+        context: Context,
+        duration: Int = Toast.LENGTH_LONG
     ) {
-        Toast.makeText(context,message,duration).show()
+        Toast.makeText(context, message, duration).show()
     }
 
     override fun onStart() {
@@ -38,6 +39,9 @@ abstract class BaseFragment : Fragment() {
         })
         _viewModel.showSnackBarInt.observe(this, Observer {
             Snackbar.make(this.requireView(), getString(it), Snackbar.LENGTH_LONG).show()
+        })
+        _viewModel.showToastInt.observe(this, Observer {
+            Toast.makeText(requireActivity(),getString(it), Toast.LENGTH_LONG).show()
         })
 
         _viewModel.navigationCommand.observe(this, Observer { command ->

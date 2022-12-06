@@ -3,24 +3,27 @@ package com.udacity.project4.locationreminders.savereminder.selectreminderlocati
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.content.Context
 import android.content.Intent
+import android.content.IntentSender
 import android.content.pm.PackageManager
 import android.location.Address
 import android.location.Geocoder
+import android.location.LocationManager
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.util.Log
 import android.view.*
-import androidx.activity.result.contract.ActivityResultContract
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.activity.result.contract.ActivityResultContracts.RequestMultiplePermissions
-import androidx.activity.result.contract.ActivityResultContracts.RequestPermission
-import androidx.core.app.ActivityCompat
+import android.widget.Toast
 import androidx.core.content.ContextCompat
+import androidx.core.location.LocationManagerCompat
 import androidx.databinding.DataBindingUtil
+import androidx.lifecycle.lifecycleScope
+import com.google.android.gms.common.api.ResolvableApiException
+import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.LocationSettingsRequest
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
@@ -32,11 +35,14 @@ import com.udacity.project4.R
 import com.udacity.project4.base.BaseFragment
 import com.udacity.project4.base.NavigationCommand
 import com.udacity.project4.databinding.FragmentSelectLocationBinding
-import com.udacity.project4.locationreminders.reminderslist.ReminderDataItem
+import com.udacity.project4.locationreminders.savereminder.SaveReminderFragment
 import com.udacity.project4.locationreminders.savereminder.SaveReminderViewModel
 import com.udacity.project4.utils.setDisplayHomeAsUpEnabled
 import kotlinx.android.synthetic.main.fragment_select_location.*
-import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.koin.android.ext.android.inject
 import java.util.*
 
@@ -61,6 +67,10 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
             DataBindingUtil.inflate(
                 inflater, R.layout.fragment_select_location, container, false
             )
+        if (!isLocationEnabled(requireContext())) {
+            showToast("please enable the lcoation in order to use the app", requireContext())
+            enableLocation()
+        }
         listeners()
         setDisplayHomeAsUpEnabled(true)
         setHasOptionsMenu(true)
@@ -79,7 +89,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         fragmentMap.getMapAsync(this)
     }
 
-    fun confirmLocation() {
+    private fun confirmLocation() {
         _viewModel.latitude.value = POI.latLng.latitude
         _viewModel.longitude.value = POI.latLng.longitude
         _viewModel.reminderSelectedLocationStr.value = POI.name ?: "Selected location"
@@ -87,7 +97,12 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     }
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
-        inflater.inflate(R.menu.main_menu, menu)
+        inflater.inflate(R.menu.map_options, menu)
+    }
+
+    fun isLocationEnabled(context: Context): Boolean {
+        val manager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        return LocationManagerCompat.isLocationEnabled(manager)
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -112,12 +127,48 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         }
     }
 
+    private fun enableLocation(resolve: Boolean = true) {
+        val locationRequest = LocationRequest.create().apply {
+            priority = LocationRequest.PRIORITY_LOW_POWER
+        }
+        val builder = LocationSettingsRequest.Builder().addLocationRequest(locationRequest)
+        val settingClient = LocationServices.getSettingsClient(requireActivity())
+        val locationSettingsResponse = settingClient.checkLocationSettings(builder.build())
 
-    private fun getCompleteAddressString(LATITUDE: Double, LONGITUDE: Double): String? {
+        locationSettingsResponse.addOnFailureListener { ex ->
+            if (ex is ResolvableApiException && resolve) {
+                try {
+                    startIntentSenderForResult(
+                        ex.resolution.intentSender,
+                        SaveReminderFragment.TURN_DEVICE_LOCATION,
+                        null,
+                        0, 0, 0, null
+                    )
+                } catch (exception: IntentSender.SendIntentException) {
+                    Log.e(
+                        TAG,
+                        "checkDeviceLocationAndStartGeoFence: ${exception.message}"
+                    )
+                }
+            } else {
+                navigateToCurrentLocation()
+            }
+        }
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == SaveReminderFragment.TURN_DEVICE_LOCATION) {
+            enableLocation(false)
+            navigateToCurrentLocation()
+        }
+    }
+
+    private fun getCompleteAddressString(lat: Double, lng: Double): String {
         var addressStr = ""
         val geocoder = Geocoder(context, Locale.getDefault())
         try {
-            val addresses: List<Address>? = geocoder.getFromLocation(LATITUDE, LONGITUDE, 1)
+            val addresses: List<Address>? = geocoder.getFromLocation(lat, lng, 1)
             if (addresses != null) {
                 val returnedAddress: Address = addresses[0]
                 val strReturnedAddress = StringBuilder("")
@@ -151,19 +202,26 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     override fun onMapReady(googleMap: GoogleMap) {
         maps = googleMap
         maps.setOnMapLongClickListener {
-            maps.clear()
-            binding.confirmLocationBtn.visibility = View.VISIBLE
-            POI = PointOfInterest(
-                it,
-                it.toString(),
-                getCompleteAddressString(it.latitude, it.longitude)
-            )
-            maps.addMarker(
-                MarkerOptions()
-                    .position(it)
-                    .title(getCompleteAddressString(it.latitude, it.longitude))
-            ).showInfoWindow()
+            lifecycleScope.launch(Dispatchers.IO) {
+                val locationName = async { getCompleteAddressString(it.latitude, it.longitude) }
+                val name = locationName.await()
+                withContext(Dispatchers.Main) {
+                    maps.clear()
+                    binding.confirmLocationBtn.visibility = View.VISIBLE
+                    POI = PointOfInterest(
+                        it,
+                        it.toString(),
+                        name
+                    )
+                    maps.addMarker(
+                        MarkerOptions()
+                            .position(it)
+                            .title(name)
+                    ).showInfoWindow()
+                }
+            }
         }
+
         maps.setMapStyle(
             MapStyleOptions.loadRawResourceStyle(
                 requireActivity(),
@@ -210,10 +268,19 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
                     maps.moveCamera(
                         CameraUpdateFactory.newLatLngZoom(latLng, 25f)
                     )
-                    maps.addMarker(
-                        MarkerOptions().position(latLng)
-                            .title(getCompleteAddressString(latLng.latitude, latLng.longitude))
-                    )
+                    lifecycleScope.launch(Dispatchers.IO) {
+                        val location =
+                            async { getCompleteAddressString(it.latitude, it.longitude) }
+                        withContext(Dispatchers.Main) {
+                            maps.addMarker(
+                                MarkerOptions().position(latLng)
+                                    .title(
+                                        location.await()
+                                    )
+                            )
+                        }
+                    }
+
                 }
             }
         }

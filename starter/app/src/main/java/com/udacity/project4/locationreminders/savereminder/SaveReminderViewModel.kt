@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.google.android.gms.maps.model.PointOfInterest
+import com.udacity.project4.MyApp
 import com.udacity.project4.R
 import com.udacity.project4.base.BaseViewModel
 import com.udacity.project4.base.NavigationCommand
@@ -69,7 +70,13 @@ class SaveReminderViewModel(val app: Application, val dataSource: ReminderDataSo
      */
     fun validateEnteredData(reminderData: ReminderDataItem): Boolean {
         if (reminderData.title.isNullOrEmpty()) {
+            showToastInt.value = R.string.err_missing_data
             showSnackBarInt.value = R.string.err_enter_title
+            return false
+        }
+        if (reminderData.description.isNullOrEmpty()) {
+            showToastInt.value = R.string.err_missing_data
+            showSnackBarInt.value = R.string.err_enter_description
             return false
         }
 

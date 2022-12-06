@@ -1,9 +1,10 @@
 package com.udacity.project4
 
 import android.app.Application
+import android.view.View
 import androidx.test.core.app.ActivityScenario
-import androidx.test.core.app.ApplicationProvider
 import androidx.test.core.app.ApplicationProvider.getApplicationContext
+import androidx.test.espresso.Espresso
 import androidx.test.espresso.Espresso.*
 import androidx.test.espresso.IdlingRegistry
 import androidx.test.espresso.action.ViewActions.*
@@ -21,10 +22,10 @@ import com.udacity.project4.locationreminders.data.local.RemindersLocalRepositor
 import com.udacity.project4.locationreminders.reminderslist.RemindersListViewModel
 import com.udacity.project4.locationreminders.savereminder.SaveReminderViewModel
 import com.udacity.project4.util.DataBindingIdlingResource
-import com.udacity.project4.util.atPosition
 import com.udacity.project4.util.monitorActivity
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
+import org.hamcrest.Matchers.not
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
@@ -36,13 +37,13 @@ import org.koin.core.context.stopKoin
 import org.koin.dsl.module
 import org.koin.test.AutoCloseKoinTest
 import org.koin.test.get
-import org.mockito.AdditionalMatchers.not
+
 
 @RunWith(AndroidJUnit4::class)
 @LargeTest
 //END TO END test to black box test the app
 class RemindersActivityTest :
-    AutoCloseKoinTest() {// Extended Koin Test - embed autoclose @after method to close Koin after every test
+    AutoCloseKoinTest() {// Extended Koin Test - embed auto close @after method to close Koin after every test
 
     private lateinit var repository: ReminderDataSource
     private lateinit var appContext: Application
@@ -52,6 +53,11 @@ class RemindersActivityTest :
     val permissionRule: GrantPermissionRule = GrantPermissionRule.grant(
         android.Manifest.permission.ACCESS_FINE_LOCATION
     )
+
+    @get:Rule
+    var activityScenarioRule = ActivityScenarioRule(RemindersActivity::class.java)
+    private lateinit var decorView: View
+
 
 //    @get:Rule
 //    var activityScenarioRule = ActivityScenarioRule(RemindersActivity::class.java)
@@ -92,6 +98,10 @@ class RemindersActivityTest :
             repository.deleteAllReminders()
         }
 
+        activityScenarioRule.scenario.onActivity { activity ->
+            decorView = activity.window.decorView
+        }
+
     }
 
 
@@ -116,17 +126,16 @@ class RemindersActivityTest :
 
 
 
+
         onView(withId(R.id.addReminderFAB)).perform(click())
 
         //add title
         val title = "Title Test"
-        onView(withId(R.id.reminderTitle)).perform(typeText(title))
-
+        onView(withId(R.id.reminderTitle)).perform(replaceText(title))
         //add discretion
-        onView(withId(R.id.reminderDescription)).perform(typeText("description Test"))
-
+        val description = "description Test"
+        onView(withId(R.id.reminderDescription)).perform(replaceText(description))
         onView(withId(R.id.selectLocation)).perform(click())
-
 
         delay(1000)
         onView(withId(R.id.map)).perform(longClick())
@@ -140,18 +149,9 @@ class RemindersActivityTest :
         onView(withText(title)).check(
             matches(isDisplayed())
         )
-
-//        onView(withId(R.id.reminderssRecyclerView)).check(
-//            matches(
-//                atPosition(
-//                    0,
-//                    withText("Testing title"),
-//                    R.id.title
-//                )
-//            )
-//        )
         reminderActivity.close()
     }
+
 
     @Test
     fun testSnackbarAndToast() {
@@ -161,6 +161,12 @@ class RemindersActivityTest :
         onView(withId(R.id.addReminderFAB)).perform(click())
         onView(withId(R.id.saveReminder)).perform(click())
 
+        //Toast
+        onView(withText(getApplicationContext<MyApp>()!!.getString(R.string.err_missing_data))).inRoot(
+            withDecorView(not(decorView))
+        ).check(matches(isDisplayed()))
+
+        // Snake bar
         onView(
             withText(
                 getApplicationContext<MyApp>()
@@ -171,6 +177,7 @@ class RemindersActivityTest :
                 isDisplayed()
             )
         )
+
         reminderActivity.close()
     }
 }

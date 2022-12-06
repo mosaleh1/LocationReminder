@@ -6,6 +6,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.udacity.project4.locationreminders.data.FakeDataSource
 import com.udacity.project4.locationreminders.data.ReminderDataSource
+import com.udacity.project4.locationreminders.data.dto.ReminderDTO
 import com.udacity.project4.locationreminders.reminderslist.ReminderDataItem
 
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -22,6 +23,7 @@ import org.robolectric.annotation.Config
 
 @ExperimentalCoroutinesApi
 @RunWith(AndroidJUnit4::class)
+@Config(sdk = [Build.VERSION_CODES.P])
 class SaveReminderViewModelTest {
 
     @get:Rule
@@ -42,7 +44,6 @@ class SaveReminderViewModelTest {
     }
 
     @Test
-    @Config(sdk = [Build.VERSION_CODES.P])
     fun validateReminder_Invalid() {
         // GIVEN - invalid reminder
         val reminder = ReminderDataItem(
@@ -62,7 +63,6 @@ class SaveReminderViewModelTest {
     }
 
     @Test
-    @Config(sdk = [Build.VERSION_CODES.P])
     fun validateReminder_Valid() {
         // GIVEN - valid reminder
         val reminder = ReminderDataItem(

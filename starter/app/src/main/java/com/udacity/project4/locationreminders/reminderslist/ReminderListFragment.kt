@@ -78,7 +78,6 @@ class ReminderListFragment : BaseFragment() {
 
         _viewModel.remindersList.observe(requireActivity()) {
             adapter.addData(it)
-            showToast("works", context = requireContext())
             binding.refreshLayout.isRefreshing = false
         }
     }

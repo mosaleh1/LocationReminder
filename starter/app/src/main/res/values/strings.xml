@@ -43,4 +43,6 @@
     <string name="sign_in">sign in</string>
     <string name="confirm">Confirm</string>
     <string name="reminder_details">Reminder Details</string>
+    <string name="err_missing_data">fill missing data first</string>
+    <string name="err_enter_description">enter the description</string>
 </resources>
